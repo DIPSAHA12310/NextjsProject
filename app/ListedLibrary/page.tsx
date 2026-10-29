@@ -4,12 +4,13 @@
 import { LibraryProvider } from "@/app/context/LibraryContext";
 import { library } from "@/app/Library";
 import Image from "next/image";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import SavedDetails from "./Saved/SavedDetails";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const Page = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const context = useContext(LibraryProvider);
 
   const [activeTab, setActiveTab] = useState<"plan" | "saved">("plan");
@@ -21,6 +22,12 @@ const Page = () => {
     (string | number)[]
   >([]);
 
+  useEffect(() => {
+    setActiveTab(
+      searchParams.get("saved") === "true" ? "saved" : "plan"
+    );
+  }, [searchParams]);
+
   if (!context) return <p>Context not found</p>;
 
   const {
@@ -30,6 +37,14 @@ const Page = () => {
     setsavelibrary,
   } = context;
 
+  const toNumber = (value: unknown) => {
+    const number = Number.parseFloat(
+      String(value ?? "").replace(/,/g, "")
+    );
+
+    return Number.isFinite(number) ? number : 0;
+  };
+
   const uniqueBooks = readlibrary.filter(
     (book, index, arr) =>
       arr.findIndex((item) => item.id === book.id) === index
@@ -37,15 +52,15 @@ const Page = () => {
 
   const sortedBooks = [...uniqueBooks].sort((a, b) => {
     if (sortBy === "duration") {
-      return Number(a.duration) - Number(b.duration);
+      return toNumber(a.duration) - toNumber(b.duration);
     }
 
     if (sortBy === "rating") {
-      return Number(b.rating) - Number(a.rating);
+      return toNumber(b.rating) - toNumber(a.rating);
     }
 
     if (sortBy === "calories") {
-      return Number(b.caloriesBurned) - Number(a.caloriesBurned);
+      return toNumber(b.caloriesBurned) - toNumber(a.caloriesBurned);
     }
 
     return 0;
@@ -56,28 +71,50 @@ const Page = () => {
       prev.filter((book) => book.id !== id)
     );
 
-    setCompletedBooks((prev) => prev.filter((item) => item !== id));
+    setCompletedBooks((prev) =>
+      prev.filter((item) => String(item) !== String(id))
+    );
   };
 
   const handleMarkAsDone = (id: library["id"]) => {
     setCompletedBooks((prev) =>
-      prev.includes(id) ? prev : [...prev, id]
+      prev.some((item) => String(item) === String(id))
+        ? prev
+        : [...prev, id]
     );
   };
 
+  const handleSavedMarkAsDone = (id: string) => {
+    const book = uniqueBooks.find(
+      (item) => String(item.id) === String(id)
+    );
+
+    if (book) {
+      handleMarkAsDone(book.id);
+    }
+  };
+
   const handleRemoveSaved = (id: string) => {
-    setsavelibrary((prev) => prev.filter((item) => item !== id));
+    setsavelibrary((prev) =>
+      prev.filter((item) => String(item) !== String(id))
+    );
   };
 
   const totalDuration = uniqueBooks.reduce(
-    (total, book) => total + Number(book.duration),
+    (total, book) => total + toNumber(book.duration),
     0
   );
 
   const totalcalories = uniqueBooks.reduce(
-    (total, book) => total + Number(book.caloriesBurned),
+    (total, book) => total + toNumber(book.caloriesBurned),
     0
   );
+
+  const completedCount = completedBooks.filter((id) =>
+    uniqueBooks.some(
+      (book) => String(book.id) === String(id)
+    )
+  ).length;
 
   return (
     <div className="p-4 sm:p-6">
@@ -111,14 +148,15 @@ const Page = () => {
       </div>
 
       <p className="mb-6">
-        Completed: {completedBooks.filter((id) =>
-          uniqueBooks.some((book) => book.id === id)
-        ).length} / {uniqueBooks.length}
+        Completed: {completedCount} / {uniqueBooks.length}
       </p>
 
       <div className="flex flex-wrap gap-4 mb-6">
         <button
-          onClick={() => setActiveTab("plan")}
+          onClick={() => {
+            setActiveTab("plan");
+            router.replace("/ListedLibrary");
+          }}
           className={`btn ${
             activeTab === "plan" ? "btn-success" : "btn-outline"
           }`}
@@ -127,7 +165,10 @@ const Page = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab("saved")}
+          onClick={() => {
+            setActiveTab("saved");
+            router.replace("/ListedLibrary?saved=true");
+          }}
           className={`btn ${
             activeTab === "saved" ? "btn-success" : "btn-outline"
           }`}
@@ -171,7 +212,9 @@ const Page = () => {
           ) : (
             <div className="flex flex-col gap-4 mb-8">
               {sortedBooks.map((book) => {
-                const isCompleted = completedBooks.includes(book.id);
+                const isCompleted = completedBooks.some(
+                  (id) => String(id) === String(book.id)
+                );
 
                 return (
                   <div
@@ -197,7 +240,7 @@ const Page = () => {
 
                       <div className="flex items-center gap-4 flex-wrap">
                         <p>{book.duration} min</p>
-                        <p>{book.caloriesBurned} Kcal</p>
+                        <p>{toNumber(book.caloriesBurned)} Kcal</p>
                         <p>Rating: {book.rating}</p>
                       </div>
 
@@ -244,7 +287,10 @@ const Page = () => {
             <div className="flex flex-col gap-4 mb-8">
               {savelibrary.map((savedId) => (
                 <div key={savedId} className="border rounded-xl p-3">
-                  <SavedDetails savedId={savedId} />
+                  <SavedDetails
+                    savedId={savedId}
+                    onMarkAsDone={handleSavedMarkAsDone}
+                  />
 
                   <button
                     onClick={() => handleRemoveSaved(savedId)}

@@ -40,7 +40,7 @@ const Navber = () => {
         <div className="navbar-center hidden lg:flex">
           <ul className="menu menu-horizontal px-1">
             <li className="text-yellow-400">
-              <a>Workouts</a>
+              <Link href="/Library" >Workouts</Link>
             </li>
 
             <li>
@@ -54,9 +54,9 @@ const Navber = () => {
             Plan({uniqueBooks.length})
           </Link>
 
-          <a className="btn">
-            Saved ({savelibrary.length})
-          </a>
+         <Link href="/ListedLibrary?saved=true" className="btn">
+  Saved ({savelibrary.length})
+</Link>
         </div>
       </div>
     </div>

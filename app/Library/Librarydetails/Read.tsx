@@ -13,9 +13,10 @@ const Read = ({ selectedLibrary }: { selectedLibrary: library }) => {
   if (!context) return null;
 
   const {
-    readlibrary,
-    setreadlibrary,
-    setsavelibrary,
+      readlibrary,
+  setreadlibrary,
+  savelibrary,
+  setsavelibrary,
   } = context;
 
   const handclick = () => {
@@ -43,17 +44,18 @@ const Read = ({ selectedLibrary }: { selectedLibrary: library }) => {
   };
 
   const handleSave = () => {
-    setsavelibrary((prev) => {
-      const id = String(selectedLibrary.id);
+  const id = String(selectedLibrary.id);
 
-      if (prev.includes(id)) {
-        alert("This exercise is already saved!");
-        return prev;
-      }
+  if (savelibrary.includes(id)) {
+    alert("This exercise is already saved!");
+    router.push("/ListedLibrary?saved=true");
+    return;
+  }
 
-      return [...prev, id];
-    });
-  };
+  setsavelibrary((prev) => [...prev, id]);
+
+  router.push("/ListedLibrary?saved=true");
+};
 
   return (
     <div className="flex flex-wrap gap-2">
