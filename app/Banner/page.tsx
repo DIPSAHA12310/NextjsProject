@@ -24,7 +24,7 @@ const Banner = () => {
            </div>
            </div>
 
-          <div className='pl-70'>
+          <div className='pl-69'>
            <Image src={logo} alt='Pic'></Image>
           </div>
           
