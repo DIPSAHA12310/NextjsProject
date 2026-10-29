@@ -4,21 +4,31 @@
 import { LibraryProvider } from "@/app/context/LibraryContext";
 import { library } from "@/app/Library";
 import Image from "next/image";
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState } from "react";
 import SavedDetails from "./Saved/SavedDetails";
 import { useRouter } from "next/navigation";
 
 const Page = () => {
   const router = useRouter();
   const context = useContext(LibraryProvider);
+
   const [activeTab, setActiveTab] = useState<"plan" | "saved">("plan");
   const [sortBy, setSortBy] = useState<
-    "default" | "duration" | "rating"
+    "default" | "duration" | "rating" | "calories"
   >("default");
+
+  const [completedBooks, setCompletedBooks] = useState<
+    (string | number)[]
+  >([]);
 
   if (!context) return <p>Context not found</p>;
 
-  const { readlibrary, setreadlibrary, savelibrary } = context;
+  const {
+    readlibrary,
+    setreadlibrary,
+    savelibrary,
+    setsavelibrary,
+  } = context;
 
   const uniqueBooks = readlibrary.filter(
     (book, index, arr) =>
@@ -34,6 +44,10 @@ const Page = () => {
       return Number(b.rating) - Number(a.rating);
     }
 
+    if (sortBy === "calories") {
+      return Number(b.caloriesBurned) - Number(a.caloriesBurned);
+    }
+
     return 0;
   });
 
@@ -41,6 +55,18 @@ const Page = () => {
     setreadlibrary((prev) =>
       prev.filter((book) => book.id !== id)
     );
+
+    setCompletedBooks((prev) => prev.filter((item) => item !== id));
+  };
+
+  const handleMarkAsDone = (id: library["id"]) => {
+    setCompletedBooks((prev) =>
+      prev.includes(id) ? prev : [...prev, id]
+    );
+  };
+
+  const handleRemoveSaved = (id: string) => {
+    setsavelibrary((prev) => prev.filter((item) => item !== id));
   };
 
   const totalDuration = uniqueBooks.reduce(
@@ -54,14 +80,14 @@ const Page = () => {
   );
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <h1 className="text-2xl font-bold mb-4">My PLAN</h1>
 
       <p className="mb-4">
         Cap of five list for today. Finish them, then load more.
       </p>
 
-      <div className="grid grid-cols-3 border rounded-xl p-4 shadow-sm mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border rounded-xl p-4 shadow-sm mb-6">
         <div>
           <h2>Exercises</h2>
           <h3 className="text-4xl text-lime-300 font-bold">
@@ -70,22 +96,27 @@ const Page = () => {
         </div>
 
         <div>
-          <p className="mt-2">Minutes</p>
+          <p>Minutes</p>
           <h4 className="text-4xl text-lime-300 font-bold">
             {totalDuration}
           </h4>
         </div>
 
         <div>
-          <p className="mt-2">Calories</p>
+          <p>Calories</p>
           <h4 className="text-4xl text-lime-300 font-bold">
             {totalcalories}
           </h4>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 mb-6">
+      <p className="mb-6">
+        Completed: {completedBooks.filter((id) =>
+          uniqueBooks.some((book) => book.id === id)
+        ).length} / {uniqueBooks.length}
+      </p>
+
+      <div className="flex flex-wrap gap-4 mb-6">
         <button
           onClick={() => setActiveTab("plan")}
           className={`btn ${
@@ -101,14 +132,13 @@ const Page = () => {
             activeTab === "saved" ? "btn-success" : "btn-outline"
           }`}
         >
-          Saved
+          Saved ({savelibrary.length})
         </button>
       </div>
 
-      {/* Add to Plan Section */}
       {activeTab === "plan" && (
         <>
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
             <h2 className="text-xl font-bold">Todays Plan</h2>
 
             <div className="flex items-center gap-3">
@@ -124,143 +154,117 @@ const Page = () => {
                       | "default"
                       | "duration"
                       | "rating"
+                      | "calories"
                   )
                 }
               >
                 <option value="default">Default</option>
                 <option value="duration">Duration</option>
                 <option value="rating">Rating</option>
+                <option value="calories">Calories</option>
               </select>
             </div>
           </div>
 
-          {sortedBooks.length === 0 ? (
+          {uniqueBooks.length === 0 ? (
             <p>No exercises added to todays plan.</p>
           ) : (
             <div className="flex flex-col gap-4 mb-8">
-              {sortedBooks.map((book) => (
-                <div
-                  key={book.id}
-                  className="flex items-start gap-4 border rounded-xl p-4 w-full"
-                >
-                  <div className="w-1/3 shrink-0">
-                    <Image
-                      src={book.image}
-                      width={300}
-                      height={200}
-                      alt={book.name}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                  </div>
+              {sortedBooks.map((book) => {
+                const isCompleted = completedBooks.includes(book.id);
 
-                  <div className="flex-1 min-w-0 space-y-3">
-                    <h2 className="font-bold text-amber-50 text-3xl">
-                      {book.name}
-                    </h2>
+                return (
+                  <div
+                    key={book.id}
+                    className="flex flex-col sm:flex-row items-start gap-4 border rounded-xl p-4 w-full"
+                  >
+                    <div className="w-full sm:w-1/3 shrink-0">
+                      <Image
+                        src={book.image}
+                        width={300}
+                        height={200}
+                        alt={book.name}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                    </div>
 
-                    <p>{book.equipment}</p>
+                    <div className="flex-1 min-w-0 space-y-3">
+                      <h2 className="font-bold text-amber-50 text-2xl sm:text-3xl">
+                        {book.name}
+                      </h2>
 
-                    <div className="flex items-center gap-4 flex-wrap">
-                      <p>{book.duration} min</p>
-                      <p>{book.caloriesBurned} Kcal</p>
-                      <p>{book.rating}</p>
+                      <p>{book.equipment}</p>
 
-                      <div className="flex gap-4 items-center">
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <p>{book.duration} min</p>
+                        <p>{book.caloriesBurned} Kcal</p>
+                        <p>Rating: {book.rating}</p>
+                      </div>
+
+                      <div className="flex gap-3 flex-wrap">
                         <button
-  onClick={() => router.push(`/Library/${book.id}`)}
-  className="btn btn-active"
->
-  View Details
-</button>
+                          onClick={() => router.push(`/Library/${book.id}`)}
+                          className="btn btn-active"
+                        >
+                          View Details
+                        </button>
 
-                        <button className="btn btn-success">
-                          Mark as Done
+                        <button
+                          onClick={() => handleMarkAsDone(book.id)}
+                          disabled={isCompleted}
+                          className="btn btn-success"
+                        >
+                          {isCompleted ? "Completed ✓" : "Mark as Done"}
                         </button>
 
                         <button
                           onClick={() => handleDelete(book.id)}
-                          className="btn btn-error btn-circle"
+                          className="btn btn-error"
                           title="Delete exercise"
                         >
-                          ✕
+                          Delete
                         </button>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </>
       )}
 
-      {/* Saved Section */}
       {activeTab === "saved" && (
         <>
-          <h2 className="text-xl font-bold mb-4">
-            Saved Exercises
-          </h2>
+          <h2 className="text-xl font-bold mb-4">Saved Exercises</h2>
 
           {savelibrary.length === 0 ? (
             <p>No saved exercises yet.</p>
           ) : (
             <div className="flex flex-col gap-4 mb-8">
               {savelibrary.map((savedId) => (
-                <SavedDetails
-                  key={savedId}
-                  savedId={savedId}
-                />
+                <div key={savedId} className="border rounded-xl p-3">
+                  <SavedDetails savedId={savedId} />
+
+                  <button
+                    onClick={() => handleRemoveSaved(savedId)}
+                    className="btn btn-error mt-3"
+                  >
+                    Remove from Saved
+                  </button>
+
+                  <button
+                    onClick={() => router.push(`/Library/${savedId}`)}
+                    className="btn btn-active mt-3 ml-2"
+                  >
+                    View Details
+                  </button>
+                </div>
               ))}
             </div>
           )}
         </>
       )}
-    </div>
-  );
-};
-
-const SavedExercise = ({ savedId }: { savedId: string }) => {
-  return <SavedExerciseDetails savedId={savedId} />;
-};
-
-const SavedExerciseDetails = ({ savedId }: { savedId: string }) => {
-  const [book, setBook] = useState<library | null>(null);
-
-  useEffect(() => {
-    const getLibrary = async () => {
-      const res = await fetch(
-        "https://api.abcz.workers.dev/api/fitlog/"
-      );
-
-      const data: library[] = await res.json();
-
-      const selectedBook = data.find(
-        (item) => String(item.id) === String(savedId)
-      );
-
-      setBook(selectedBook ?? null);
-    };
-
-    getLibrary();
-  }, [savedId]);
-
-  if (!book) return null;
-
-  return (
-    <div className="border rounded-xl p-4">
-      <Image
-        src={book.image}
-        width={300}
-        height={200}
-        alt={book.name}
-        className="w-full h-48 object-cover rounded-lg"
-      />
-
-      <h3 className="text-xl font-bold mt-3">{book.name}</h3>
-      <p>{book.equipment}</p>
-      <p>{book.duration} min</p>
-      <p>{book.caloriesBurned} Kcal</p>
-      <p>Rating: {book.rating}</p>
     </div>
   );
 };

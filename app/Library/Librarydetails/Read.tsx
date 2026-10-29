@@ -12,9 +12,27 @@ const Read = ({ selectedLibrary }: { selectedLibrary: library }) => {
 
   if (!context) return null;
 
-  const { setreadlibrary, setsavelibrary } = context;
+  const {
+    readlibrary,
+    setreadlibrary,
+    setsavelibrary,
+  } = context;
 
   const handclick = () => {
+    const alreadyAdded = readlibrary.some(
+      (book) => book.id === selectedLibrary.id
+    );
+
+    if (alreadyAdded) {
+      alert("This exercise is already in your plan!");
+      return;
+    }
+
+    if (readlibrary.length >= 5) {
+      alert("Your plan is full! You can add only 5 exercises.");
+      return;
+    }
+
     setreadlibrary((prev) =>
       prev.some((book) => book.id === selectedLibrary.id)
         ? prev
@@ -24,18 +42,21 @@ const Read = ({ selectedLibrary }: { selectedLibrary: library }) => {
     router.push("/ListedLibrary");
   };
 
-const handleSave = () => {
-  setsavelibrary((prev) => {
-    const id = String(selectedLibrary.id);
+  const handleSave = () => {
+    setsavelibrary((prev) => {
+      const id = String(selectedLibrary.id);
 
-    if (prev.includes(id)) return prev;
+      if (prev.includes(id)) {
+        alert("This exercise is already saved!");
+        return prev;
+      }
 
-    return [...prev, id];
-  });
-};
+      return [...prev, id];
+    });
+  };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       <button
         onClick={handclick}
         className="bg-[#c6ff00] text-black text-xs font-semibold px-4 py-3 rounded-xl"

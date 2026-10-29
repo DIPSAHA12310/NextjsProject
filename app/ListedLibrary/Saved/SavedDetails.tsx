@@ -4,20 +4,33 @@
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { library } from "@/app/Library";
+import { useRouter } from "next/navigation";
 
 interface ISavedDetails {
   savedId: string;
 }
 
 const SavedDetails = ({ savedId }: ISavedDetails) => {
+  const router = useRouter();
+
   const [book, setBook] = useState<library | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
     const getLibrary = async () => {
       try {
+        setLoading(true);
+        setError(false);
+
         const res = await fetch(
           "https://api.abcz.workers.dev/api/fitlog/"
         );
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch exercises");
+        }
 
         const data: library[] = await res.json();
 
@@ -26,20 +39,32 @@ const SavedDetails = ({ savedId }: ISavedDetails) => {
         );
 
         setBook(selectedBook ?? null);
+
+        if (!selectedBook) {
+          setError(true);
+        }
       } catch (error) {
         console.error("Failed to load exercise:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
       }
     };
 
     getLibrary();
   }, [savedId]);
 
-  if (!book) return <p>Loading exercise...</p>;
+  if (loading) {
+    return <p className="p-4">Loading exercise...</p>;
+  }
+
+  if (error || !book) {
+    return <p className="p-4">Exercise could not be loaded.</p>;
+  }
 
   return (
-    <div className="flex items-center gap-6 border rounded-xl p-4 w-full">
-      {/* Image on the left */}
-      <div className="w-1/4 shrink-0">
+    <div className="flex flex-col sm:flex-row items-start gap-4 border rounded-xl p-4 w-full">
+      <div className="w-full sm:w-1/4 shrink-0">
         {book.image && (
           <Image
             src={book.image}
@@ -51,7 +76,6 @@ const SavedDetails = ({ savedId }: ISavedDetails) => {
         )}
       </div>
 
-      {/* Name and equipment */}
       <div className="flex-1 min-w-0 space-y-3">
         <h2 className="font-bold text-amber-50 text-2xl">
           {book.name}
@@ -59,31 +83,28 @@ const SavedDetails = ({ savedId }: ISavedDetails) => {
 
         <p>{book.equipment}</p>
 
-        {/* Duration, calories and rating */}
-        <div className="flex items-center gap-4">
-          <p className="whitespace-nowrap">
-            {book.duration} min
-          </p>
-
-          <p className="whitespace-nowrap">
-            {book.caloriesBurned} Kcal
-          </p>
-
-          <p className="whitespace-nowrap">
-            {book.rating}
-          </p>
+        <div className="flex flex-wrap items-center gap-4">
+          <p>{book.duration} min</p>
+          <p>{book.caloriesBurned} Kcal</p>
+          <p>Rating: {book.rating}</p>
         </div>
-      </div>
 
-      {/* Two buttons on the far right */}
-      <div className="flex items-center gap-3 shrink-0">
-        <button className="btn btn-active whitespace-nowrap">
-          View Details
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => router.push(`/Library/${book.id}`)}
+            className="btn btn-active"
+          >
+            View Details
+          </button>
 
-        <button className="btn btn-success whitespace-nowrap">
-          Mark as Done
-        </button>
+          <button
+            onClick={() => setIsCompleted(true)}
+            disabled={isCompleted}
+            className="btn btn-success"
+          >
+            {isCompleted ? "Completed ✓" : "Mark as Done"}
+          </button>
+        </div>
       </div>
     </div>
   );
