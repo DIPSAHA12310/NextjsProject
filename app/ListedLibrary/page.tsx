@@ -4,26 +4,26 @@
 import { LibraryProvider } from "@/app/context/LibraryContext";
 import { library } from "@/app/Library";
 import Image from "next/image";
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+  Suspense,
+  useContext,
+  useState,
+} from "react";
 import SavedDetails from "./Saved/SavedDetails";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 
-const Page = () => {
+const ListedLibraryContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const context = useContext(LibraryProvider);
 
-  const [activeTab, setActiveTab] = useState<"plan" | "saved">("plan");
+  const activeTab =
+    searchParams.get("saved") === "true" ? "saved" : "plan";
+
   const [sortBy, setSortBy] = useState<
     "default" | "duration" | "rating" | "calories"
   >("default");
-
-  useEffect(() => {
-    setActiveTab(
-      searchParams.get("saved") === "true" ? "saved" : "plan"
-    );
-  }, [searchParams]);
 
   if (!context) return <p>Context not found</p>;
 
@@ -169,10 +169,7 @@ const Page = () => {
 
       <div className="flex flex-wrap gap-4 mb-6">
         <button
-          onClick={() => {
-            setActiveTab("plan");
-            router.replace("/ListedLibrary");
-          }}
+          onClick={() => router.replace("/ListedLibrary")}
           className={`btn ${
             activeTab === "plan" ? "btn-success" : "btn-outline"
           }`}
@@ -181,10 +178,9 @@ const Page = () => {
         </button>
 
         <button
-          onClick={() => {
-            setActiveTab("saved");
-            router.replace("/ListedLibrary?saved=true");
-          }}
+          onClick={() =>
+            router.replace("/ListedLibrary?saved=true")
+          }
           className={`btn ${
             activeTab === "saved" ? "btn-success" : "btn-outline"
           }`}
@@ -262,7 +258,9 @@ const Page = () => {
 
                       <div className="flex gap-3 flex-wrap">
                         <button
-                          onClick={() => router.push(`/Library/${book.id}`)}
+                          onClick={() =>
+                            router.push(`/Library/${book.id}`)
+                          }
                           className="btn btn-active"
                         >
                           View Details
@@ -273,7 +271,9 @@ const Page = () => {
                           disabled={isCompleted}
                           className="btn btn-success"
                         >
-                          {isCompleted ? "Completed ✓" : "Mark as Done"}
+                          {isCompleted
+                            ? "Completed ✓"
+                            : "Mark as Done"}
                         </button>
 
                         <button
@@ -295,14 +295,19 @@ const Page = () => {
 
       {activeTab === "saved" && (
         <>
-          <h2 className="text-xl font-bold mb-4">Saved Exercises</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Saved Exercises
+          </h2>
 
           {savelibrary.length === 0 ? (
             <p>No saved exercises yet.</p>
           ) : (
             <div className="flex flex-col gap-4 mb-8">
               {savelibrary.map((savedId) => (
-                <div key={savedId} className="border rounded-xl p-3">
+                <div
+                  key={savedId}
+                  className="border rounded-xl p-3"
+                >
                   <SavedDetails
                     savedId={savedId}
                     onMarkAsDone={handleSavedMarkAsDone}
@@ -316,7 +321,9 @@ const Page = () => {
                   </button>
 
                   <button
-                    onClick={() => router.push(`/Library/${savedId}`)}
+                    onClick={() =>
+                      router.push(`/Library/${savedId}`)
+                    }
                     className="btn btn-active mt-3 ml-2"
                   >
                     View Details
@@ -328,6 +335,20 @@ const Page = () => {
         </>
       )}
     </div>
+  );
+};
+
+const Page = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-10 text-center">
+          Loading your plan...
+        </div>
+      }
+    >
+      <ListedLibraryContent />
+    </Suspense>
   );
 };
 

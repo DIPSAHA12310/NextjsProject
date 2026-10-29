@@ -8,15 +8,18 @@ import { useRouter } from "next/navigation";
 
 interface ISavedDetails {
   savedId: string;
+  onMarkAsDone: (id: string) => void;
 }
 
-const SavedDetails = ({ savedId }: ISavedDetails) => {
+const SavedDetails = ({
+  savedId,
+  onMarkAsDone,
+}: ISavedDetails) => {
   const router = useRouter();
 
   const [book, setBook] = useState<library | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
     const getLibrary = async () => {
@@ -98,11 +101,10 @@ const SavedDetails = ({ savedId }: ISavedDetails) => {
           </button>
 
           <button
-            onClick={() => setIsCompleted(true)}
-            disabled={isCompleted}
+            onClick={() => onMarkAsDone(savedId)}
             className="btn btn-success"
           >
-            {isCompleted ? "Completed ✓" : "Mark as Done"}
+            Mark as Done
           </button>
         </div>
       </div>

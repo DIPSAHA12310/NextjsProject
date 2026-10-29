@@ -1,34 +1,57 @@
-import Link from 'next/link';
-import { library } from '../Library';
-import LIbraryCardSystem from './LIbraryCard';
 
+import { Suspense } from "react";
+import { library } from "../Library";
+import LIbraryCardSystem from "./LIbraryCard";
 
-const Library = async()=>{
-const res = await fetch ("http://localhost:3000/libraryData.json")
-const data = await res.json();
-return data
-}
+const getLibrary = async (): Promise<library[]> => {
+  const res = await fetch("http://localhost:3000/libraryData.json", {
+    cache: "no-store",
+  });
 
+  if (!res.ok) {
+    throw new Error("Failed to fetch library data");
+  }
 
-const LibraryCard = async() => {
-    const LibraryData = await Library()
-    return (
-        <div>
-           <div className='text-4xl pt-10 font-bold'>
-                THE LIBRARY 
-              
-            </div>
-              <span>
-                    Twelve lifts covering every major muscle grupe.
-                </span>
-         
+  return res.json();
+};
 
-            <div className='grid grid-cols-3 gap-2'>
-                 {LibraryData.map((card:library)=> <Link href={`/Library/${card.id}`} key={card.id}><LIbraryCardSystem  card={card}></LIbraryCardSystem></Link> )}
-            </div>
-       
+const LibraryContent = async () => {
+  const LibraryData = await getLibrary();
+
+  return (
+    <div>
+      <div className="text-4xl pt-10 font-bold">
+        THE LIBRARY
+      </div>
+
+      <span>
+        Twelve lifts covering every major muscle group.
+      </span>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        {LibraryData.map((card: library) => (
+          <LIbraryCardSystem
+            key={card.id}
+            card={card}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const LibraryCard = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-10 text-center">
+          Loading exercises...
         </div>
-    );
+      }
+    >
+      <LibraryContent />
+    </Suspense>
+  );
 };
 
 export default LibraryCard;
