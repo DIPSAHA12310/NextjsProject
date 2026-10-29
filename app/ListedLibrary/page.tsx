@@ -7,6 +7,7 @@ import Image from "next/image";
 import React, { useContext, useEffect, useState } from "react";
 import SavedDetails from "./Saved/SavedDetails";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "react-toastify";
 
 const Page = () => {
   const router = useRouter();
@@ -17,10 +18,6 @@ const Page = () => {
   const [sortBy, setSortBy] = useState<
     "default" | "duration" | "rating" | "calories"
   >("default");
-
-  const [completedBooks, setCompletedBooks] = useState<
-    (string | number)[]
-  >([]);
 
   useEffect(() => {
     setActiveTab(
@@ -35,6 +32,8 @@ const Page = () => {
     setreadlibrary,
     savelibrary,
     setsavelibrary,
+    completedBooks,
+    setCompletedBooks,
   } = context;
 
   const toNumber = (value: unknown) => {
@@ -74,14 +73,27 @@ const Page = () => {
     setCompletedBooks((prev) =>
       prev.filter((item) => String(item) !== String(id))
     );
+
+    toast.success("Exercise removed from your plan!");
   };
 
   const handleMarkAsDone = (id: library["id"]) => {
+    const alreadyCompleted = completedBooks.some(
+      (item) => String(item) === String(id)
+    );
+
+    if (alreadyCompleted) {
+      toast.warning("This exercise is already completed!");
+      return;
+    }
+
     setCompletedBooks((prev) =>
       prev.some((item) => String(item) === String(id))
         ? prev
         : [...prev, id]
     );
+
+    toast.success("Workout completed!");
   };
 
   const handleSavedMarkAsDone = (id: string) => {
@@ -91,6 +103,8 @@ const Page = () => {
 
     if (book) {
       handleMarkAsDone(book.id);
+    } else {
+      toast.info("Add this exercise to your plan first!");
     }
   };
 
@@ -98,6 +112,8 @@ const Page = () => {
     setsavelibrary((prev) =>
       prev.filter((item) => String(item) !== String(id))
     );
+
+    toast.success("Removed from Saved!");
   };
 
   const totalDuration = uniqueBooks.reduce(

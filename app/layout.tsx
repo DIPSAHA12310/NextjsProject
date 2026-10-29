@@ -5,6 +5,8 @@ import "./globals.css";
 import Navber from "./Navber/page";
 import LibraryContext from "./context/LibraryContext";
 import Footer from "./Footer/Footer";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +33,11 @@ export default function RootLayout({
     >
       <body className="min-h-screen flex flex-col">
         <LibraryContext>
+          <ToastContainer
+            position="top-right"
+            autoClose={2000}
+          />
+
           <Navber />
 
           <main className="flex-1">

@@ -5,6 +5,7 @@ import { LibraryProvider } from "@/app/context/LibraryContext";
 import { library } from "@/app/Library";
 import { useRouter } from "next/navigation";
 import React, { useContext } from "react";
+import { toast } from "react-toastify";
 
 const Read = ({ selectedLibrary }: { selectedLibrary: library }) => {
   const context = useContext(LibraryProvider);
@@ -13,10 +14,10 @@ const Read = ({ selectedLibrary }: { selectedLibrary: library }) => {
   if (!context) return null;
 
   const {
-      readlibrary,
-  setreadlibrary,
-  savelibrary,
-  setsavelibrary,
+    readlibrary,
+    setreadlibrary,
+    savelibrary,
+    setsavelibrary,
   } = context;
 
   const handclick = () => {
@@ -25,12 +26,12 @@ const Read = ({ selectedLibrary }: { selectedLibrary: library }) => {
     );
 
     if (alreadyAdded) {
-      alert("This exercise is already in your plan!");
+      toast.warning("This exercise is already in your plan!");
       return;
     }
 
     if (readlibrary.length >= 5) {
-      alert("Your plan is full! You can add only 5 exercises.");
+      toast.error("Your plan is full! You can add only 5 exercises.");
       return;
     }
 
@@ -40,22 +41,28 @@ const Read = ({ selectedLibrary }: { selectedLibrary: library }) => {
         : [...prev, selectedLibrary]
     );
 
+    toast.success("Exercise added to your plan!");
+
     router.push("/ListedLibrary");
   };
 
   const handleSave = () => {
-  const id = String(selectedLibrary.id);
+    const id = String(selectedLibrary.id);
 
-  if (savelibrary.includes(id)) {
-    alert("This exercise is already saved!");
+    if (savelibrary.includes(id)) {
+      toast.warning("This exercise is already saved!");
+      router.push("/ListedLibrary?saved=true");
+      return;
+    }
+
+    setsavelibrary((prev) =>
+      prev.includes(id) ? prev : [...prev, id]
+    );
+
+    toast.success("Exercise saved successfully!");
+
     router.push("/ListedLibrary?saved=true");
-    return;
-  }
-
-  setsavelibrary((prev) => [...prev, id]);
-
-  router.push("/ListedLibrary?saved=true");
-};
+  };
 
   return (
     <div className="flex flex-wrap gap-2">
