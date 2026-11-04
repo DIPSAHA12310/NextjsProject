@@ -28,6 +28,7 @@ const LibraryContext = ({ children }: { children: ReactNode }) => {
   const [completedBooks, setCompletedBooks] = useState<
     (string | number)[]
   >([]);
+
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -37,15 +38,19 @@ const LibraryContext = ({ children }: { children: ReactNode }) => {
       const savedCompleted = localStorage.getItem("completedBooks");
 
       if (savedPlan) {
-        setreadlibrary(JSON.parse(savedPlan));
+        const parsedPlan: library[] = JSON.parse(savedPlan);
+        setreadlibrary(parsedPlan);
       }
 
       if (savedExercises) {
-        setsavelibrary(JSON.parse(savedExercises));
+        const parsedExercises: string[] = JSON.parse(savedExercises);
+        setsavelibrary(parsedExercises);
       }
 
       if (savedCompleted) {
-        setCompletedBooks(JSON.parse(savedCompleted));
+        const parsedCompleted: (string | number)[] =
+          JSON.parse(savedCompleted);
+        setCompletedBooks(parsedCompleted);
       }
     } catch (error) {
       console.error("Failed to load saved data:", error);
@@ -59,7 +64,10 @@ const LibraryContext = ({ children }: { children: ReactNode }) => {
 
     localStorage.setItem("readlibrary", JSON.stringify(readlibrary));
     localStorage.setItem("savelibrary", JSON.stringify(savelibrary));
-    localStorage.setItem("completedBooks", JSON.stringify(completedBooks));
+    localStorage.setItem(
+      "completedBooks",
+      JSON.stringify(completedBooks)
+    );
   }, [readlibrary, savelibrary, completedBooks, isLoaded]);
 
   return (

@@ -1,7 +1,6 @@
 
 import { library } from "@/app/Library";
 import Image from "next/image";
-import Link from "next/link";
 import { Suspense } from "react";
 import Read from "../Librarydetails/Read";
 
@@ -11,7 +10,7 @@ interface IBookdetails {
     }>;
 }
 
-const getlibrary = async () => {
+const getlibrary = async (): Promise<library[]> => {
     const res = await fetch(
         "https://api.abcz.workers.dev/api/fitlog/",
         { cache: "force-cache" }
@@ -24,9 +23,17 @@ const getlibrary = async () => {
     return res.json();
 };
 
+export async function generateStaticParams() {
+    const librarydata = await getlibrary();
+
+    return librarydata.map((item) => ({
+        ID: String(item.id),
+    }));
+}
+
 const LibraryDetails = async ({ params }: IBookdetails) => {
     const { ID } = await params;
-    const librarydata: library[] = await getlibrary();
+    const librarydata = await getlibrary();
 
     const selectedLibrary = librarydata.find(
         (item) => String(item.id) === ID
@@ -43,19 +50,17 @@ const LibraryDetails = async ({ params }: IBookdetails) => {
     return (
         <div className="min-h-screen bg-[#0e1014] text-white p-5">
             <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                {/* Image */}
                 <div>
                     <Image
                         src={selectedLibrary.image}
                         alt={selectedLibrary.name}
                         width={600}
                         height={400}
+                        unoptimized
                         className="w-full rounded-2xl object-cover"
                     />
                 </div>
 
-                {/* Details */}
                 <div className="max-w-xl">
                     <h1 className="text-3xl font-extrabold uppercase tracking-tight">
                         {selectedLibrary.name}
@@ -66,14 +71,12 @@ const LibraryDetails = async ({ params }: IBookdetails) => {
                             "Explore the details of this item."}
                     </p>
 
-                    {/* Categories */}
                     <div className="flex gap-2 mt-4">
                         <span className="bg-[#c6ff00] text-black text-[10px] font-semibold px-3 py-1 rounded-full">
                             {selectedLibrary.muscleGroups}
                         </span>
                     </div>
 
-                    {/* Information */}
                     <div className="mt-6 bg-[#161a22] border border-[#252b36] rounded-2xl overflow-hidden">
                         {[
                             ["equipment", selectedLibrary.equipment],
@@ -91,14 +94,11 @@ const LibraryDetails = async ({ params }: IBookdetails) => {
                                 <span className="text-gray-400 text-[10px] font-bold tracking-wider">
                                     {label}
                                 </span>
-                                <span className="text-sm">
-                                    {value}
-                                </span>
+                                <span className="text-sm">{value}</span>
                             </div>
                         ))}
                     </div>
 
-                    {/* Instructions */}
                     <div className="mt-7">
                         <h2 className="text-sm font-extrabold tracking-wide">
                             Instructions
@@ -115,15 +115,8 @@ const LibraryDetails = async ({ params }: IBookdetails) => {
                         </ul>
                     </div>
 
-                    {/* Buttons */}
                     <div className="flex flex-wrap gap-3 mt-8">
-                       <Read selectedLibrary ={selectedLibrary} ></Read>
-
-                        {/* <button
-                            className="border border-[#343b49] text-white text-xs px-5 py-3 rounded-xl hover:bg-[#1b202a] transition"
-                        >
-                            Save for later
-                        </button> */}
+                        <Read selectedLibrary={selectedLibrary} />
                     </div>
                 </div>
             </div>

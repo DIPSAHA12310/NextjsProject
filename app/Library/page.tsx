@@ -1,22 +1,9 @@
-
-import { Suspense } from "react";
 import { library } from "../Library";
 import LIbraryCardSystem from "./LIbraryCard";
+import LibraryData from "../../public/libraryData.json";
 
-const getLibrary = async (): Promise<library[]> => {
-  const res = await fetch("http://localhost:3000/libraryData.json", {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch library data");
-  }
-
-  return res.json();
-};
-
-const LibraryContent = async () => {
-  const LibraryData = await getLibrary();
+const LibraryCard = () => {
+  const data: library[] = LibraryData;
 
   return (
     <div>
@@ -29,7 +16,7 @@ const LibraryContent = async () => {
       </span>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {LibraryData.map((card: library) => (
+        {data.map((card: library) => (
           <LIbraryCardSystem
             key={card.id}
             card={card}
@@ -37,20 +24,6 @@ const LibraryContent = async () => {
         ))}
       </div>
     </div>
-  );
-};
-
-const LibraryCard = () => {
-  return (
-    <Suspense
-      fallback={
-        <div className="p-10 text-center">
-          Loading exercises...
-        </div>
-      }
-    >
-      <LibraryContent />
-    </Suspense>
   );
 };
 
